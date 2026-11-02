@@ -6,6 +6,7 @@ import boto3
 import pandas as pd
 import io
 from datetime import datetime
+from s3_event_utils import decode_s3_object_key
 
 def flatten(data):
     orders_data=[]
@@ -32,7 +33,7 @@ def flatten(data):
 def lambda_handler(event, context):
     # TODO implement
     bucket_name = event['Records'][0]['s3']['bucket']['name']
-    key=event['Records'][0]['s3']['object']['key']
+    key = decode_s3_object_key(event['Records'][0]['s3']['object']['key'])
 
     s3 = boto3.client('s3')
     response = s3.get_object(Bucket=bucket_name, Key=key)
@@ -42,7 +43,7 @@ def lambda_handler(event, context):
     data = json.loads(content)
     df = flatten(data)
     
-    # in-memory binary buffer to hold data like a file, but without writing to disk.
+    # in-memory binary buffer to hold data like a file, without writing to disk.
     parquet_buffer = io.BytesIO()
     df.to_parquet(parquet_buffer, index=False, engine='pyarrow')
 
